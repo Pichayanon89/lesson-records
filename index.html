@@ -229,7 +229,11 @@
         setStatus("AI วิเคราะห์สำเร็จแล้ว กรุณาตรวจทานก่อนบันทึก", "success");
       } catch (error) {
         analyzeBasic(false);
-        setStatus(`AI วิเคราะห์ไม่สำเร็จ จึงใช้ fallback: ${error.message}`, "error");
+        const message = error instanceof TypeError && error.message === "Failed to fetch"
+          ? "ยังเชื่อมต่อ Supabase Edge Function ไม่ได้ กรุณา deploy analyze-record และตั้งค่า GEMINI_API_KEY ก่อน"
+          : error.message;
+
+        setStatus(`AI วิเคราะห์ไม่สำเร็จ จึงใช้ fallback: ${message}`, "error");
       }
     }
 
