@@ -1,4 +1,4 @@
-import { corsHeaders } from "../_shared/cors.ts";
+import { corsHeaders, originAllowed } from "../_shared/cors.ts";
 
 type AnalyzeRequest = {
   subject?: string;
@@ -44,6 +44,10 @@ function assertString(value: unknown, fallback = "") {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  if (!originAllowed(req)) {
+    return jsonResponse({ error: "Origin not allowed" }, 403);
   }
 
   if (req.method !== "POST") {
