@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายงานบันทึกหลังสอน | @AnubanNonghan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background-color: white; }
+            .print-container { box-shadow: none; padding: 0; }
+        }
+        @page { margin: 2cm; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto mb-4 flex justify-between items-center no-print">
+        <a href="index.html" class="bg-gray-500 text-white px-4 py-2 rounded shadow hover:bg-gray-600">
+            <i class="fas fa-arrow-left"></i> กลับไปหน้าบันทึก
+        </a>
+        <button onclick="window.print()" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700">
+            <i class="fas fa-print"></i> พิมพ์เป็น PDF
+        </button>
+    </div>
+
+    <div class="max-w-4xl mx-auto bg-white rounded shadow-lg p-8 print-container">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold">รายงานบันทึกหลังการสอน</h1>
+            <h2 class="text-xl">โรงเรียนอนุบาลหนองหานวิทยายน</h2>
+        </div>
+
+        <table class="w-full border-collapse border border-gray-300 mb-8">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="border border-gray-300 p-2 text-left">วันที่</th>
+                    <th class="border border-gray-300 p-2 text-left">วิชา / ชั้นเรียน</th>
+                    <th class="border border-gray-300 p-2 text-center">คะแนน (K-P-A)</th>
+                    <th class="border border-gray-300 p-2 text-left">ปัญหาและแนวทางแก้ไข</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="4" class="text-center p-4 text-gray-500">กำลังโหลดข้อมูล...</td></tr>
+            </tbody>
+        </table>
+
+        <div class="mt-16 text-right pr-8">
+            <p class="mb-4">ลงชื่อ .............................................................. ผู้สอน</p>
+            <p class="font-bold">(Pichayanon Watjanasoontorn @AnubanNonghan)</p>
+            <p class="mt-2">ตำแหน่ง ครูชำนาญการ</p>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://dqudvtapdypzngmwaega.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_PzeH2jrH8EQI-HmIpOhQ1g_eFySvIhH'; 
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        async function fetchRecords() {
+            const { data, error } = await supabase.from('lesson_records').select('*').order('created_at', { ascending: false });
+            const tbody = document.getElementById('tableBody');
+            
+            if (error) { tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 text-center p-4">เกิดข้อผิดพลาด: ${error.message}</td></tr>`; return; }
+            if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-500">ยังไม่มีข้อมูลบันทึกหลังสอน</td></tr>`; return; }
+
+            tbody.innerHTML = '';
+            data.forEach(record => {
+                const dateObj = new Date(record.created_at);
+                const dateStr = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+                const tagsStr = record.media_tags ? record.media_tags.join(', ') : '-';
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="border border-gray-300 p-2 text-sm w-1/6">${dateStr}</td>
+                        <td class="border border-gray-300 p-2 text-sm w-1/4"><b>${record.subject}</b><br>ชั้น: ${record.class_name}<br><span class="text-xs text-teal-600">สื่อ: ${tagsStr}</span></td>
+                        <td class="border border-gray-300 p-2 text-sm text-center w-1/6">K:${record.k_score} | P:${record.p_score} | A:${record.a_score}</td>
+                        <td class="border border-gray-300 p-2 text-sm w-5/12">${record.problems || '-'}</td>
+                    </tr>`;
+            });
+        }
+        fetchRecords();
+    </script>
+</body>
+</html>
