@@ -124,7 +124,7 @@
   <script>
     const SUPABASE_URL = "https://dqudvtapdypzngmwaega.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_PzeH2jrH8EQI-HmIpOhQ1g_eFySvIhH";
-    const GEMINI_ENDPOINT = "";
+    const GEMINI_ENDPOINT = `${SUPABASE_URL}/functions/v1/analyze-record`;
     const TABLE_NAME = "lesson_records";
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -203,7 +203,11 @@
       try {
         const response = await fetch(GEMINI_ENDPOINT, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          },
           body: JSON.stringify({
             subject: $("subject").value,
             class_name: $("className").value,

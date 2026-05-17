@@ -1,0 +1,4 @@
+project_id = "dqudvtapdypzngmwaega"
+
+[functions.analyze-record]
+verify_jwt = true
