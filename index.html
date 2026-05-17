@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบส่งแผนฯ | @AnubanNonghan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans p-4">
+
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-lg overflow-hidden p-6 mt-4">
+        <h2 class="text-2xl font-bold text-teal-700 mb-6 text-center">บันทึกหลังสอน</h2>
+        
+        <div class="mb-4 text-right">
+            <a href="report.html" class="text-teal-600 hover:text-teal-800 underline text-sm font-semibold">
+                <i class="fas fa-file-alt"></i> ดูรายงานทั้งหมด
+            </a>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-semibold mb-1 text-gray-700">วิชาที่สอน</label>
+            <select id="subject" class="w-full border rounded-lg p-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                <option value="วิทยาศาสตร์และเทคโนโลยี">วิทยาศาสตร์และเทคโนโลยี</option>
+                <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                <option value="การงานอาชีพ">การงานอาชีพ</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="block text-sm font-semibold mb-1 text-gray-700">ชั้นเรียน</label>
+            <select id="className" class="w-full border rounded-lg p-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500">
+                <option value="ป.4">ประถมศึกษาปีที่ 4</option>
+                <option value="ป.5">ประถมศึกษาปีที่ 5</option>
+                <option value="ป.6">ประถมศึกษาปีที่ 6</option>
+            </select>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-semibold mb-2 text-gray-700">สื่อที่ใช้ (เลือกได้มากกว่า 1)</label>
+            <div class="flex flex-wrap gap-4 text-sm bg-gray-50 p-3 rounded-lg border">
+                <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" value="KidBright" class="media-tag w-4 h-4 text-teal-600 rounded"> <span>KidBright</span></label>
+                <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" value="Canva" class="media-tag w-4 h-4 text-teal-600 rounded"> <span>Canva</span></label>
+                <label class="flex items-center space-x-2 cursor-pointer"><input type="checkbox" value="Google AI Studio" class="media-tag w-4 h-4 text-teal-600 rounded"> <span>Google AI Studio</span></label>
+            </div>
+        </div>
+
+        <div class="mb-6 space-y-4 bg-teal-50 p-4 rounded-lg border border-teal-100">
+            <label class="block text-sm font-bold text-teal-800">ประเมินผล (1-5)</label>
+            <div class="flex items-center justify-between"><span class="text-sm font-semibold w-8">K</span> <input type="range" id="kScore" min="1" max="5" value="4" class="w-full mx-2 accent-teal-600"> <span id="kVal" class="font-bold w-4 text-right">4</span></div>
+            <div class="flex items-center justify-between"><span class="text-sm font-semibold w-8">P</span> <input type="range" id="pScore" min="1" max="5" value="4" class="w-full mx-2 accent-teal-600"> <span id="pVal" class="font-bold w-4 text-right">4</span></div>
+            <div class="flex items-center justify-between"><span class="text-sm font-semibold w-8">A</span> <input type="range" id="aScore" min="1" max="5" value="5" class="w-full mx-2 accent-teal-600"> <span id="aVal" class="font-bold w-4 text-right">5</span></div>
+        </div>
+
+        <div class="mb-6 relative">
+            <label class="block text-sm font-semibold mb-1 text-gray-700">ปัญหาและแนวทางแก้ไข</label>
+            <textarea id="problemsText" rows="4" class="w-full border rounded-lg p-3 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="กดปุ่มไมค์ด้านขวาล่าง แล้วพูดได้เลยครับ..."></textarea>
+            
+            <button id="micBtn" class="absolute bottom-3 right-3 bg-teal-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-teal-700 transition">
+                <i class="fas fa-microphone text-xl"></i>
+            </button>
+        </div>
+
+        <button id="saveBtn" class="w-full bg-teal-700 text-white text-lg font-bold py-3 rounded-lg hover:bg-teal-800 transition shadow-md">
+            บันทึกข้อมูล
+        </button>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://dqudvtapdypzngmwaega.supabase.co'; 
+        const SUPABASE_KEY = 'sb_publishable_PzeH2jrH8EQI-HmIpOhQ1g_eFySvIhH'; 
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        document.querySelectorAll('input[type="range"]').forEach(slider => {
+            slider.addEventListener('input', (e) => {
+                document.getElementById(e.target.id.replace('Score', 'Val')).innerText = e.target.value;
+            });
+        });
+
+        const micBtn = document.getElementById('micBtn');
+        const textArea = document.getElementById('problemsText');
+        let isRecording = false;
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'th-TH'; 
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onstart = function() {
+                micBtn.classList.remove('bg-teal-600');
+                micBtn.classList.add('bg-red-500', 'animate-pulse'); 
+            };
+
+            recognition.onresult = function(event) {
+                let finalTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        let text = event.results[i][0].transcript;
+                        text = text.replace(/คณิต/g, 'คณิตศาสตร์');
+                        text = text.replace(/นาที/g, 'นาที'); 
+                        text = text.replace(/ห้านาที/g, '5 นาที');
+                        text = text.replace(/สิบนาที/g, '10 นาที');
+                        finalTranscript += text;
+                    }
+                }
+                if(finalTranscript !== '') textArea.value += finalTranscript + ' ';
+            };
+
+            recognition.onend = function() {
+                micBtn.classList.add('bg-teal-600');
+                micBtn.classList.remove('bg-red-500', 'animate-pulse');
+                isRecording = false;
+            };
+
+            micBtn.addEventListener('click', () => {
+                if (!isRecording) { recognition.start(); isRecording = true; } 
+                else { recognition.stop(); isRecording = false; }
+            });
+        } else {
+            micBtn.style.display = 'none';
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('saveBtn');
+            btn.innerText = 'กำลังบันทึก...'; btn.disabled = true;
+
+            const subject = document.getElementById('subject').value;
+            const className = document.getElementById('className').value;
+            const kScore = parseInt(document.getElementById('kScore').value);
+            const pScore = parseInt(document.getElementById('pScore').value);
+            const aScore = parseInt(document.getElementById('aScore').value);
+            const problems = document.getElementById('problemsText').value;
+            const tags = Array.from(document.querySelectorAll('.media-tag:checked')).map(cb => cb.value);
+
+            const { data, error } = await supabase.from('lesson_records').insert([{
+                subject: subject, class_name: className, k_score: kScore, p_score: pScore, a_score: aScore, media_tags: tags, problems: problems
+            }]);
+
+            if (error) alert('เกิดข้อผิดพลาด: ' + error.message);
+            else {
+                alert('บันทึกข้อมูลเรียบร้อยแล้วครับ!');
+                document.getElementById('problemsText').value = '';
+                document.querySelectorAll('.media-tag').forEach(cb => cb.checked = false);
+            }
+            btn.innerText = 'บันทึกข้อมูล'; btn.disabled = false;
+        });
+    </script>
+</body>
+</html>
