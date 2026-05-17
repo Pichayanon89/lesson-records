@@ -71,12 +71,16 @@
 
         <label>
           <span class="block text-sm font-bold">วิชา</span>
-          <input id="subjectFilter" type="text" placeholder="ทุกวิชา" class="mt-1 w-full rounded-lg border p-2">
+          <select id="subjectFilter" class="mt-1 w-full rounded-lg border p-2">
+            <option value="">ทุกวิชา</option>
+          </select>
         </label>
 
         <label>
           <span class="block text-sm font-bold">ชั้นเรียน</span>
-          <input id="classFilter" type="text" placeholder="ทุกชั้น" class="mt-1 w-full rounded-lg border p-2">
+          <select id="classFilter" class="mt-1 w-full rounded-lg border p-2">
+            <option value="">ทุกชั้นเรียน</option>
+          </select>
         </label>
 
         <label>
@@ -253,11 +257,11 @@
       }
 
       if (subject) {
-        records = records.filter(record => safeText(record.subject, "").toLowerCase().includes(subject));
+        records = records.filter(record => safeText(record.subject, "").toLowerCase() === subject);
       }
 
       if (className) {
-        records = records.filter(record => safeText(record.class_name, "").toLowerCase().includes(className));
+        records = records.filter(record => safeText(record.class_name, "").toLowerCase() === className);
       }
 
       if (startDate) {
@@ -293,7 +297,23 @@
       }
 
       allRecords = data || [];
+      populateFilterOptions(allRecords);
       applyFilters();
+    }
+
+    function populateFilterOptions(records) {
+      const subjectSelect = document.getElementById("subjectFilter");
+      const classSelect = document.getElementById("classFilter");
+      const subjects = [...new Set(records.map(record => safeText(record.subject, "")).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, "th"));
+      const classes = [...new Set(records.map(record => safeText(record.class_name, "")).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, "th"));
+
+      subjectSelect.innerHTML = `<option value="">ทุกวิชา</option>` +
+        subjects.map(subject => `<option value="${subject}">${subject}</option>`).join("");
+
+      classSelect.innerHTML = `<option value="">ทุกชั้นเรียน</option>` +
+        classes.map(className => `<option value="${className}">${className}</option>`).join("");
     }
 
     function renderRecords(records) {
@@ -390,8 +410,8 @@
       document.getElementById("applyBtn").addEventListener("click", applyFilters);
       document.getElementById("sortSelect").addEventListener("change", applyFilters);
       document.getElementById("searchInput").addEventListener("input", applyFilters);
-      document.getElementById("subjectFilter").addEventListener("input", applyFilters);
-      document.getElementById("classFilter").addEventListener("input", applyFilters);
+      document.getElementById("subjectFilter").addEventListener("change", applyFilters);
+      document.getElementById("classFilter").addEventListener("change", applyFilters);
       document.getElementById("startDate").addEventListener("change", applyFilters);
       document.getElementById("endDate").addEventListener("change", applyFilters);
       document.getElementById("resetBtn").addEventListener("click", () => {
