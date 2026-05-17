@@ -7,10 +7,10 @@ type AnalyzeRequest = {
   raw_text?: string;
 };
 
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{ text?: string }>;
+type GroqResponse = {
+  choices?: Array<{
+    message?: {
+      content?: string;
     };
   }>;
   error?: {
@@ -30,7 +30,7 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-function cleanGeminiJson(text: string) {
+function cleanModelJson(text: string) {
   return text
     .replace(/```json/g, "")
     .replace(/```/g, "")
@@ -54,10 +54,10 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "Method not allowed" }, 405);
   }
 
-  const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+  const groqApiKey = Deno.env.get("GROQ_API_KEY");
 
-  if (!geminiApiKey) {
-    return jsonResponse({ error: "GEMINI_API_KEY is not configured" }, 500);
+  if (!groqApiKey) {
+    return jsonResponse({ error: "GROQ_API_KEY is not configured" }, 500);
   }
 
   let payload: AnalyzeRequest;
@@ -102,35 +102,42 @@ ${rawText}
 `;
 
   try {
-    const geminiResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+    const groqResponse = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Authorization": `Bearer ${groqApiKey}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
-          contents: [
+          model: "llama-3.1-8b-instant",
+          temperature: 0.2,
+          response_format: { type: "json_object" },
+          messages: [
             {
-              parts: [{ text: prompt }],
+              role: "system",
+              content: "คุณคือผู้ช่วยครูไทย ตอบเป็น JSON object เท่านั้น ห้ามมี markdown หรือคำอธิบายอื่น",
+            },
+            {
+              role: "user",
+              content: prompt,
             },
           ],
-          generationConfig: {
-            temperature: 0.2,
-            responseMimeType: "application/json",
-          },
         }),
       },
     );
 
-    const geminiData = await geminiResponse.json() as GeminiResponse;
+    const groqData = await groqResponse.json() as GroqResponse;
 
-    if (!geminiResponse.ok) {
+    if (!groqResponse.ok) {
       return jsonResponse({
-        error: geminiData.error?.message || "Gemini API error",
-      }, geminiResponse.status);
+        error: groqData.error?.message || "Groq API error",
+      }, groqResponse.status);
     }
 
-    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const result = JSON.parse(cleanGeminiJson(text));
+    const text = groqData.choices?.[0]?.message?.content || "";
+    const result = JSON.parse(cleanModelJson(text));
 
     return jsonResponse({
       k: assertString(result.k),

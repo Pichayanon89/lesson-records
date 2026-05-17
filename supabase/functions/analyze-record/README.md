@@ -1,12 +1,12 @@
 # analyze-record
 
-Supabase Edge Function สำหรับเรียก Gemini โดยไม่เปิดเผย `GEMINI_API_KEY` ใน GitHub Pages
+Supabase Edge Function สำหรับเรียก Groq โดยไม่เปิดเผย `GROQ_API_KEY` ใน GitHub Pages
 
 ## Deploy
 
 ```powershell
 npx supabase login
-npx supabase secrets set GEMINI_API_KEY="YOUR_GEMINI_API_KEY" --project-ref dqudvtapdypzngmwaega
+npx supabase secrets set GROQ_API_KEY="YOUR_GROQ_API_KEY" --project-ref dqudvtapdypzngmwaega
 npx supabase functions deploy analyze-record --project-ref dqudvtapdypzngmwaega
 ```
 
