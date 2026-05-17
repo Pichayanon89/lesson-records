@@ -1,87 +1,189 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>รายงานบันทึกหลังสอน | @AnubanNonghan</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        @media print {
-            .no-print { display: none !important; }
-            body { background-color: white; }
-            .print-container { box-shadow: none; padding: 0; }
-        }
-        @page { margin: 2cm; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports | Quick Record</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; }
+      .a4 { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
+    }
+    @page { margin: 14mm; }
+  </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans p-4 md:p-8">
 
-    <div class="max-w-4xl mx-auto mb-4 flex justify-between items-center no-print">
-        <a href="index.html" class="bg-gray-500 text-white px-4 py-2 rounded shadow hover:bg-gray-600">
-            <i class="fas fa-arrow-left"></i> กลับไปหน้าบันทึก
-        </a>
-        <button onclick="window.print()" class="bg-teal-600 text-white px-4 py-2 rounded shadow hover:bg-teal-700">
-            <i class="fas fa-print"></i> พิมพ์เป็น PDF
-        </button>
-    </div>
+<body class="bg-slate-100 text-slate-900">
+  <section class="no-print mx-auto mt-5 flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4">
+    <a href="index.html" class="rounded-2xl bg-white px-5 py-3 font-bold shadow">กลับไป Quick Record</a>
+    <button onclick="window.print()" class="rounded-2xl bg-blue-700 px-5 py-3 font-bold text-white shadow">พิมพ์ / Export PDF</button>
+  </section>
 
-    <div class="max-w-4xl mx-auto bg-white rounded shadow-lg p-8 print-container">
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold">รายงานบันทึกหลังการสอน</h1>
-            <h2 class="text-xl">โรงเรียนอนุบาลหนองหานวิทยายน</h2>
-        </div>
+  <main class="a4 mx-auto my-5 max-w-5xl bg-white p-6 shadow-xl md:p-8">
+    <header class="border-b-2 border-slate-900 pb-5 text-center">
+      <h1 class="text-2xl font-black">รายงานบันทึกหลังสอน</h1>
+      <p class="mt-1">โรงเรียนอนุบาลหนองหานวิทยายน</p>
+      <p class="text-sm text-slate-500">Quick Record | AI Teacher Workflow</p>
+    </header>
 
-        <table class="w-full border-collapse border border-gray-300 mb-8">
-            <thead>
-                <tr class="bg-gray-100">
-                    <th class="border border-gray-300 p-2 text-left">วันที่</th>
-                    <th class="border border-gray-300 p-2 text-left">วิชา / ชั้นเรียน</th>
-                    <th class="border border-gray-300 p-2 text-center">คะแนน (K-P-A)</th>
-                    <th class="border border-gray-300 p-2 text-left">ปัญหาและแนวทางแก้ไข</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="4" class="text-center p-4 text-gray-500">กำลังโหลดข้อมูล...</td></tr>
-            </tbody>
-        </table>
+    <section class="mt-5 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+      <div class="rounded-2xl border p-3">
+        <p class="text-slate-500">บันทึก</p>
+        <p id="totalRecords" class="text-2xl font-black">0</p>
+      </div>
+      <div class="rounded-2xl border p-3">
+        <p class="text-slate-500">วิชา</p>
+        <p id="totalSubjects" class="text-2xl font-black">0</p>
+      </div>
+      <div class="rounded-2xl border p-3">
+        <p class="text-slate-500">ปัญหา</p>
+        <p id="totalProblems" class="text-2xl font-black">0</p>
+      </div>
+      <div class="rounded-2xl border p-3">
+        <p class="text-slate-500">PA Tags</p>
+        <p id="totalPATags" class="text-2xl font-black">0</p>
+      </div>
+    </section>
 
-        <div class="mt-16 text-right pr-8">
-            <p class="mb-4">ลงชื่อ .............................................................. ผู้สอน</p>
-            <p class="font-bold">(Pichayanon Watjanasoontorn @AnubanNonghan)</p>
-            <p class="mt-2">ตำแหน่ง ครูชำนาญการ</p>
-        </div>
-    </div>
+    <section class="mt-5">
+      <h2 class="mb-2 font-black">สรุปภาพรวม</h2>
+      <p id="summaryText" class="rounded-2xl border p-4 text-sm leading-7">กำลังโหลดข้อมูล...</p>
+    </section>
 
-    <script>
-        const SUPABASE_URL = 'https://dqudvtapdypzngmwaega.supabase.co'; 
-        const SUPABASE_KEY = 'sb_publishable_PzeH2jrH8EQI-HmIpOhQ1g_eFySvIhH'; 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    <section class="mt-5 overflow-x-auto">
+      <table class="w-full border-collapse text-xs">
+        <thead>
+          <tr class="bg-slate-900 text-white">
+            <th class="border p-2 text-left">วันที่</th>
+            <th class="border p-2 text-left">วิชา/ชั้น</th>
+            <th class="border p-2 text-left">เรื่องที่สอน</th>
+            <th class="border p-2 text-left">ผล K-P-A</th>
+            <th class="border p-2 text-left">ปัญหา/แนวทาง</th>
+          </tr>
+        </thead>
+        <tbody id="recordsTable">
+          <tr>
+            <td colspan="5" class="border p-4 text-center text-slate-500">กำลังโหลดข้อมูล...</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
 
-        async function fetchRecords() {
-            const { data, error } = await supabase.from('lesson_records').select('*').order('created_at', { ascending: false });
-            const tbody = document.getElementById('tableBody');
-            
-            if (error) { tbody.innerHTML = `<tr><td colspan="4" class="text-red-500 text-center p-4">เกิดข้อผิดพลาด: ${error.message}</td></tr>`; return; }
-            if (data.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-gray-500">ยังไม่มีข้อมูลบันทึกหลังสอน</td></tr>`; return; }
+    <section class="mt-6">
+      <h2 class="mb-2 font-black">PA Tags / หลักฐานที่เกี่ยวข้อง</h2>
+      <div id="paTagList" class="flex flex-wrap gap-2 text-xs">-</div>
+    </section>
 
-            tbody.innerHTML = '';
-            data.forEach(record => {
-                const dateObj = new Date(record.created_at);
-                const dateStr = dateObj.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-                const tagsStr = record.media_tags ? record.media_tags.join(', ') : '-';
+    <footer class="mt-12 text-right text-sm">
+      <p>ลงชื่อ .............................................................. ผู้สอน</p>
+      <p class="mt-2 font-bold">( นายพิชญานนท์ วัจนสุนทร )</p>
+    </footer>
+  </main>
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="border border-gray-300 p-2 text-sm w-1/6">${dateStr}</td>
-                        <td class="border border-gray-300 p-2 text-sm w-1/4"><b>${record.subject}</b><br>ชั้น: ${record.class_name}<br><span class="text-xs text-teal-600">สื่อ: ${tagsStr}</span></td>
-                        <td class="border border-gray-300 p-2 text-sm text-center w-1/6">K:${record.k_score} | P:${record.p_score} | A:${record.a_score}</td>
-                        <td class="border border-gray-300 p-2 text-sm w-5/12">${record.problems || '-'}</td>
-                    </tr>`;
-            });
+  <script>
+    const SUPABASE_URL = "https://dqudvtapdypzngmwaega.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_PzeH2jrH8EQI-HmIpOhQ1g_eFySvIhH";
+    const TABLE_NAME = "lesson_records";
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function safeText(value, fallback = "-") {
+      return value && String(value).trim() ? value : fallback;
+    }
+
+    function formatDate(value) {
+      if (!value) return "-";
+      return new Date(value).toLocaleDateString("th-TH", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+      });
+    }
+
+    function getProblem(record) {
+      return record.problem || record.problems || "";
+    }
+
+    function getSolution(record) {
+      return record.solution || record.improvements || "";
+    }
+
+    function tagText(tags) {
+      return Array.isArray(tags) && tags.length ? tags.map(tag => `#${tag}`).join(" ") : "-";
+    }
+
+    async function loadRecords() {
+      const { data, error } = await db
+        .from(TABLE_NAME)
+        .select("*")
+        .order("record_date", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        document.getElementById("recordsTable").innerHTML =
+          `<tr><td colspan="5" class="border p-4 text-center text-red-600">โหลดข้อมูลไม่สำเร็จ: ${error.message}</td></tr>`;
+        return;
+      }
+
+      renderRecords(data || []);
+    }
+
+    function renderRecords(records) {
+      const subjects = new Set(records.map(record => record.subject).filter(Boolean));
+      const problems = records.filter(record => getProblem(record).trim());
+      const paTags = new Set();
+
+      records.forEach(record => {
+        if (Array.isArray(record.pa_tags)) {
+          record.pa_tags.forEach(tag => paTags.add(tag));
         }
-        fetchRecords();
-    </script>
+      });
+
+      document.getElementById("totalRecords").textContent = records.length;
+      document.getElementById("totalSubjects").textContent = subjects.size;
+      document.getElementById("totalProblems").textContent = problems.length;
+      document.getElementById("totalPATags").textContent = paTags.size;
+
+      document.getElementById("summaryText").textContent =
+        `มีบันทึกหลังสอนทั้งหมด ${records.length} รายการ ครอบคลุม ${subjects.size} วิชา พบประเด็นปัญหาที่ควรติดตาม ${problems.length} รายการ และมี PA Tags จำนวน ${paTags.size} แท็ก สามารถใช้ประกอบรายงานหลังสอนและหลักฐาน PA ได้`;
+
+      document.getElementById("paTagList").innerHTML = paTags.size
+        ? [...paTags].map(tag => `<span class="rounded-full bg-violet-100 px-3 py-1 font-bold text-violet-800">#${tag}</span>`).join("")
+        : `<span class="text-slate-500">ยังไม่มี PA Tags</span>`;
+
+      const table = document.getElementById("recordsTable");
+
+      if (!records.length) {
+        table.innerHTML = `<tr><td colspan="5" class="border p-4 text-center text-slate-500">ยังไม่มีข้อมูลบันทึกหลังสอน</td></tr>`;
+        return;
+      }
+
+      table.innerHTML = records.map(record => `
+        <tr class="align-top">
+          <td class="border p-2">${formatDate(record.record_date || record.created_at)}</td>
+          <td class="border p-2">
+            <strong>${safeText(record.subject)}</strong><br>
+            ${safeText(record.class_name)}<br>
+            <span class="text-slate-500">${tagText(record.media_tags)}</span>
+          </td>
+          <td class="border p-2">${safeText(record.unit_name)}</td>
+          <td class="border p-2">
+            <strong>K:</strong> ${safeText(record.learning_result_k)}<br>
+            <strong>P:</strong> ${safeText(record.learning_result_p)}<br>
+            <strong>A:</strong> ${safeText(record.learning_result_a)}<br>
+            <span class="text-slate-500">${tagText(record.pa_tags)}</span>
+          </td>
+          <td class="border p-2">
+            <strong>ปัญหา:</strong> ${safeText(getProblem(record))}<br>
+            <strong>แนวทาง:</strong> ${safeText(getSolution(record))}
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    document.addEventListener("DOMContentLoaded", loadRecords);
+  </script>
 </body>
 </html>
