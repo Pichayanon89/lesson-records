@@ -3,88 +3,183 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reports | Quick Record</title>
+  <title>รายงานบันทึกหลังสอน | Quick Record</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    @media print {
-      .no-print { display: none !important; }
-      body { background: white !important; }
-      .a4 { box-shadow: none !important; margin: 0 !important; max-width: none !important; }
+    body {
+      font-family: "TH Sarabun New", "TH SarabunPSK", "Sarabun", sans-serif;
     }
-    @page { margin: 14mm; }
+
+    .official-report {
+      font-family: "TH Sarabun New", "TH SarabunPSK", "Sarabun", sans-serif;
+      font-size: 16pt;
+      line-height: 1.18;
+    }
+
+    .official-report table {
+      font-size: 15pt;
+    }
+
+    .record-block {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+
+      body {
+        background: white !important;
+      }
+
+      .a4 {
+        box-shadow: none !important;
+        margin: 0 !important;
+        max-width: none !important;
+        padding: 0 !important;
+      }
+
+      .official-report {
+        font-size: 16pt;
+      }
+    }
+
+    @page {
+      size: A4;
+      margin: 14mm;
+    }
   </style>
 </head>
 
-<body class="bg-slate-100 text-slate-900">
-  <section class="no-print mx-auto mt-5 flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4">
-    <a href="index.html" class="rounded-2xl bg-white px-5 py-3 font-bold shadow">กลับไป Quick Record</a>
-    <button onclick="window.print()" class="rounded-2xl bg-blue-700 px-5 py-3 font-bold text-white shadow">พิมพ์ / Export PDF</button>
-  </section>
+<body class="bg-slate-100 text-slate-950">
+  <section class="no-print mx-auto mt-5 max-w-6xl px-4">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <a href="index.html" class="rounded-lg bg-white px-5 py-3 font-bold shadow">กลับไป Quick Record</a>
+      <button onclick="window.print()" class="rounded-lg bg-blue-700 px-5 py-3 font-bold text-white shadow">พิมพ์ / Export PDF</button>
+    </div>
 
-  <main class="a4 mx-auto my-5 max-w-5xl bg-white p-6 shadow-xl md:p-8">
-    <header class="border-b-2 border-slate-900 pb-5 text-center">
-      <div class="flex flex-col items-center gap-3">
-        <img src="assets/logo.jpg" alt="โลโก้โรงเรียนอนุบาลหนองหานวิทยายน" class="h-24 w-24 rounded-full border bg-white object-cover md:h-28 md:w-28">
-        <div>
-          <h1 class="text-2xl font-black">รายงานบันทึกหลังสอน</h1>
-          <p class="mt-1">โรงเรียนอนุบาลหนองหานวิทยายน</p>
-          <p class="text-sm text-slate-500">Quick Record | AI Teacher Workflow</p>
+    <div class="rounded-xl bg-white p-4 shadow">
+      <h2 class="mb-3 text-lg font-black">ค้นหาและจัดเรียงข้อมูล</h2>
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-6">
+        <label class="md:col-span-2">
+          <span class="block text-sm font-bold">ค้นหา</span>
+          <input id="searchInput" type="search" placeholder="ค้นหาวิชา เรื่อง ปัญหา K-P-A" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+
+        <label>
+          <span class="block text-sm font-bold">วิชา</span>
+          <input id="subjectFilter" type="text" placeholder="ทุกวิชา" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+
+        <label>
+          <span class="block text-sm font-bold">ชั้นเรียน</span>
+          <input id="classFilter" type="text" placeholder="ทุกชั้น" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+
+        <label>
+          <span class="block text-sm font-bold">ตั้งแต่วันที่</span>
+          <input id="startDate" type="date" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+
+        <label>
+          <span class="block text-sm font-bold">ถึงวันที่</span>
+          <input id="endDate" type="date" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+      </div>
+
+      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
+        <label>
+          <span class="block text-sm font-bold">จัดเรียง</span>
+          <select id="sortSelect" class="mt-1 w-full rounded-lg border p-2">
+            <option value="date-desc">วันที่ล่าสุดก่อน</option>
+            <option value="date-asc">วันที่เก่าก่อน</option>
+            <option value="subject-asc">วิชา ก-ฮ</option>
+            <option value="class-asc">ชั้นเรียน ก-ฮ</option>
+            <option value="problem-desc">รายการที่มีปัญหาก่อน</option>
+          </select>
+        </label>
+
+        <div class="flex items-end gap-2 md:col-span-3">
+          <button id="applyBtn" type="button" class="rounded-lg bg-slate-900 px-5 py-2 font-bold text-white">ใช้ตัวกรอง</button>
+          <button id="resetBtn" type="button" class="rounded-lg bg-slate-200 px-5 py-2 font-bold">ล้างตัวกรอง</button>
+          <p id="filterStatus" class="text-sm font-bold text-slate-600"></p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <main class="a4 official-report mx-auto my-5 max-w-6xl bg-white p-8 shadow-xl">
+    <header class="border-b-2 border-slate-950 pb-4 text-center">
+      <img src="assets/logo.jpg" alt="โลโก้โรงเรียนอนุบาลหนองหานวิทยายน" class="mx-auto h-24 w-24 rounded-full border bg-white object-cover">
+      <h1 class="mt-3 text-[22pt] font-bold">รายงานบันทึกหลังสอน</h1>
+      <p>โรงเรียนอนุบาลหนองหานวิทยายน</p>
+      <p>สำนักงานเขตพื้นที่การศึกษาประถมศึกษาอุดรธานี เขต ๓</p>
     </header>
 
-    <section class="mt-5 grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
-      <div class="rounded-2xl border p-3">
-        <p class="text-slate-500">บันทึก</p>
-        <p id="totalRecords" class="text-2xl font-black">0</p>
-      </div>
-      <div class="rounded-2xl border p-3">
-        <p class="text-slate-500">วิชา</p>
-        <p id="totalSubjects" class="text-2xl font-black">0</p>
-      </div>
-      <div class="rounded-2xl border p-3">
-        <p class="text-slate-500">ปัญหา</p>
-        <p id="totalProblems" class="text-2xl font-black">0</p>
-      </div>
-      <div class="rounded-2xl border p-3">
-        <p class="text-slate-500">PA Tags</p>
-        <p id="totalPATags" class="text-2xl font-black">0</p>
-      </div>
+    <section class="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+      <p><strong>ครูผู้สอน:</strong> นายพิชญานนท์ วัจนสุนทร</p>
+      <p><strong>ปีการศึกษา:</strong> ๒๕๖๙</p>
+      <p><strong>ประเภทเอกสาร:</strong> บันทึกหลังการจัดการเรียนรู้</p>
+      <p><strong>วันที่ออกรายงาน:</strong> <span id="printDate">-</span></p>
     </section>
 
-    <section class="mt-5">
-      <h2 class="mb-2 font-black">สรุปภาพรวม</h2>
-      <p id="summaryText" class="rounded-2xl border p-4 text-sm leading-7">กำลังโหลดข้อมูล...</p>
-    </section>
-
-    <section class="mt-5 overflow-x-auto">
-      <table class="w-full border-collapse text-xs">
-        <thead>
-          <tr class="bg-slate-900 text-white">
-            <th class="border p-2 text-left">วันที่</th>
-            <th class="border p-2 text-left">วิชา/ชั้น</th>
-            <th class="border p-2 text-left">เรื่องที่สอน</th>
-            <th class="border p-2 text-left">ผล K-P-A</th>
-            <th class="border p-2 text-left">ปัญหา/แนวทาง</th>
-          </tr>
-        </thead>
-        <tbody id="recordsTable">
+    <section class="mt-4">
+      <table class="w-full border-collapse">
+        <tbody>
           <tr>
-            <td colspan="5" class="border p-4 text-center text-slate-500">กำลังโหลดข้อมูล...</td>
+            <td class="w-1/4 border border-slate-700 p-2 font-bold">จำนวนบันทึก</td>
+            <td class="border border-slate-700 p-2"><span id="totalRecords">0</span> รายการ</td>
+            <td class="w-1/4 border border-slate-700 p-2 font-bold">จำนวนวิชา</td>
+            <td class="border border-slate-700 p-2"><span id="totalSubjects">0</span> วิชา</td>
+          </tr>
+          <tr>
+            <td class="border border-slate-700 p-2 font-bold">ประเด็นปัญหา</td>
+            <td class="border border-slate-700 p-2"><span id="totalProblems">0</span> รายการ</td>
+            <td class="border border-slate-700 p-2 font-bold">PA Tags</td>
+            <td class="border border-slate-700 p-2"><span id="totalPATags">0</span> แท็ก</td>
           </tr>
         </tbody>
       </table>
     </section>
 
-    <section class="mt-6">
-      <h2 class="mb-2 font-black">PA Tags / หลักฐานที่เกี่ยวข้อง</h2>
-      <div id="paTagList" class="flex flex-wrap gap-2 text-xs">-</div>
+    <section class="mt-4">
+      <h2 class="font-bold">๑. สรุปภาพรวม</h2>
+      <p id="summaryText" class="mt-1 rounded border border-slate-700 p-3">กำลังโหลดข้อมูล...</p>
     </section>
 
-    <footer class="mt-12 text-right text-sm">
-      <p>ลงชื่อ .............................................................. ผู้สอน</p>
-      <p class="mt-2 font-bold">( นายพิชญานนท์ วัจนสุนทร )</p>
+    <section class="mt-4">
+      <h2 class="font-bold">๒. รายการบันทึกหลังการจัดการเรียนรู้</h2>
+      <div id="recordsList" class="mt-2 space-y-4">
+        <p class="border border-slate-700 p-4 text-center">กำลังโหลดข้อมูล...</p>
+      </div>
+    </section>
+
+    <section class="mt-5">
+      <h2 class="font-bold">๓. PA Tags / หลักฐานที่เกี่ยวข้อง</h2>
+      <p id="paTagList" class="mt-1 rounded border border-slate-700 p-3">-</p>
+    </section>
+
+    <section class="mt-6">
+      <h2 class="font-bold">๔. ความคิดเห็น/ข้อเสนอแนะของผู้บริหารหรือผู้รับรอง</h2>
+      <div class="mt-2 h-24 rounded border border-slate-700 p-3"></div>
+    </section>
+
+    <footer class="mt-10 grid grid-cols-1 gap-8 md:grid-cols-2">
+      <div></div>
+      <div class="text-center">
+        <p>ลงชื่อ .............................................................. ผู้สอน</p>
+        <p class="mt-1">( นายพิชญานนท์ วัจนสุนทร )</p>
+        <p class="mt-1">วันที่ .......... / .......... / ..........</p>
+      </div>
+      <div></div>
+      <div class="text-center">
+        <p>ลงชื่อ .............................................................. ผู้รับรอง</p>
+        <p class="mt-1">( .............................................................. )</p>
+        <p class="mt-1">ตำแหน่ง ..............................................................</p>
+      </div>
     </footer>
   </main>
 
@@ -93,16 +188,21 @@
     const SUPABASE_ANON_KEY = "sb_publishable_PzeH2jrH8EQI-HmIpOhQ1g_eFySvIhH";
     const TABLE_NAME = "lesson_records";
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let allRecords = [];
 
     function safeText(value, fallback = "-") {
-      return value && String(value).trim() ? value : fallback;
+      return value && String(value).trim() ? String(value).trim() : fallback;
+    }
+
+    function recordDate(record) {
+      return record.record_date || record.created_at || "";
     }
 
     function formatDate(value) {
       if (!value) return "-";
       return new Date(value).toLocaleDateString("th-TH", {
         year: "numeric",
-        month: "short",
+        month: "long",
         day: "numeric"
       });
     }
@@ -119,6 +219,66 @@
       return Array.isArray(tags) && tags.length ? tags.map(tag => `#${tag}`).join(" ") : "-";
     }
 
+    function searchableText(record) {
+      return [
+        record.record_date,
+        record.created_at,
+        record.teacher_name,
+        record.class_name,
+        record.subject,
+        record.unit_name,
+        record.learning_result_k,
+        record.learning_result_p,
+        record.learning_result_a,
+        getProblem(record),
+        getSolution(record),
+        record.note,
+        tagText(record.media_tags),
+        tagText(record.pa_tags)
+      ].join(" ").toLowerCase();
+    }
+
+    function applyFilters() {
+      const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
+      const subject = document.getElementById("subjectFilter").value.trim().toLowerCase();
+      const className = document.getElementById("classFilter").value.trim().toLowerCase();
+      const startDate = document.getElementById("startDate").value;
+      const endDate = document.getElementById("endDate").value;
+      const sortMode = document.getElementById("sortSelect").value;
+
+      let records = [...allRecords];
+
+      if (keyword) {
+        records = records.filter(record => searchableText(record).includes(keyword));
+      }
+
+      if (subject) {
+        records = records.filter(record => safeText(record.subject, "").toLowerCase().includes(subject));
+      }
+
+      if (className) {
+        records = records.filter(record => safeText(record.class_name, "").toLowerCase().includes(className));
+      }
+
+      if (startDate) {
+        records = records.filter(record => recordDate(record).slice(0, 10) >= startDate);
+      }
+
+      if (endDate) {
+        records = records.filter(record => recordDate(record).slice(0, 10) <= endDate);
+      }
+
+      records.sort((a, b) => {
+        if (sortMode === "date-asc") return recordDate(a).localeCompare(recordDate(b));
+        if (sortMode === "subject-asc") return safeText(a.subject, "").localeCompare(safeText(b.subject, ""), "th");
+        if (sortMode === "class-asc") return safeText(a.class_name, "").localeCompare(safeText(b.class_name, ""), "th");
+        if (sortMode === "problem-desc") return Number(Boolean(getProblem(b).trim())) - Number(Boolean(getProblem(a).trim()));
+        return recordDate(b).localeCompare(recordDate(a));
+      });
+
+      renderRecords(records);
+    }
+
     async function loadRecords() {
       const { data, error } = await db
         .from(TABLE_NAME)
@@ -127,12 +287,13 @@
         .order("created_at", { ascending: false });
 
       if (error) {
-        document.getElementById("recordsTable").innerHTML =
-          `<tr><td colspan="5" class="border p-4 text-center text-red-600">โหลดข้อมูลไม่สำเร็จ: ${error.message}</td></tr>`;
+        document.getElementById("recordsList").innerHTML =
+          `<p class="border border-slate-700 p-4 text-center text-red-700">โหลดข้อมูลไม่สำเร็จ: ${error.message}</p>`;
         return;
       }
 
-      renderRecords(data || []);
+      allRecords = data || [];
+      applyFilters();
     }
 
     function renderRecords(records) {
@@ -150,45 +311,99 @@
       document.getElementById("totalSubjects").textContent = subjects.size;
       document.getElementById("totalProblems").textContent = problems.length;
       document.getElementById("totalPATags").textContent = paTags.size;
+      document.getElementById("filterStatus").textContent = `แสดง ${records.length} จาก ${allRecords.length} รายการ`;
 
       document.getElementById("summaryText").textContent =
-        `มีบันทึกหลังสอนทั้งหมด ${records.length} รายการ ครอบคลุม ${subjects.size} วิชา พบประเด็นปัญหาที่ควรติดตาม ${problems.length} รายการ และมี PA Tags จำนวน ${paTags.size} แท็ก สามารถใช้ประกอบรายงานหลังสอนและหลักฐาน PA ได้`;
+        `มีบันทึกหลังสอนทั้งหมด ${records.length} รายการ ครอบคลุม ${subjects.size} วิชา พบประเด็นปัญหาหรืออุปสรรคที่ควรติดตาม ${problems.length} รายการ และมีการเชื่อมโยง PA Tags จำนวน ${paTags.size} แท็ก ข้อมูลดังกล่าวสามารถใช้ประกอบการติดตามผลการจัดการเรียนรู้ การปรับปรุงการสอน และการจัดทำหลักฐานประกอบการประเมินผลการพัฒนางานตามข้อตกลง (PA) ได้`;
 
-      document.getElementById("paTagList").innerHTML = paTags.size
-        ? [...paTags].map(tag => `<span class="rounded-full bg-violet-100 px-3 py-1 font-bold text-violet-800">#${tag}</span>`).join("")
-        : `<span class="text-slate-500">ยังไม่มี PA Tags</span>`;
+      document.getElementById("paTagList").textContent = paTags.size
+        ? [...paTags].map(tag => `#${tag}`).join("  ")
+        : "ยังไม่มี PA Tags";
 
-      const table = document.getElementById("recordsTable");
+      const list = document.getElementById("recordsList");
 
       if (!records.length) {
-        table.innerHTML = `<tr><td colspan="5" class="border p-4 text-center text-slate-500">ยังไม่มีข้อมูลบันทึกหลังสอน</td></tr>`;
+        list.innerHTML = `<p class="border border-slate-700 p-4 text-center">ไม่พบข้อมูลตามเงื่อนไขที่ค้นหา</p>`;
         return;
       }
 
-      table.innerHTML = records.map(record => `
-        <tr class="align-top">
-          <td class="border p-2">${formatDate(record.record_date || record.created_at)}</td>
-          <td class="border p-2">
-            <strong>${safeText(record.subject)}</strong><br>
-            ${safeText(record.class_name)}<br>
-            <span class="text-slate-500">${tagText(record.media_tags)}</span>
-          </td>
-          <td class="border p-2">${safeText(record.unit_name)}</td>
-          <td class="border p-2">
-            <strong>K:</strong> ${safeText(record.learning_result_k)}<br>
-            <strong>P:</strong> ${safeText(record.learning_result_p)}<br>
-            <strong>A:</strong> ${safeText(record.learning_result_a)}<br>
-            <span class="text-slate-500">${tagText(record.pa_tags)}</span>
-          </td>
-          <td class="border p-2">
-            <strong>ปัญหา:</strong> ${safeText(getProblem(record))}<br>
-            <strong>แนวทาง:</strong> ${safeText(getSolution(record))}
-          </td>
-        </tr>
+      list.innerHTML = records.map((record, index) => `
+        <article class="record-block border border-slate-800">
+          <div class="border-b border-slate-800 bg-slate-100 p-2 font-bold">
+            รายการที่ ${index + 1}: ${safeText(record.subject)} | ${safeText(record.class_name)} | ${formatDate(recordDate(record))}
+          </div>
+          <table class="w-full border-collapse">
+            <tbody>
+              <tr>
+                <td class="w-1/5 border border-slate-700 p-2 font-bold">วันที่สอน</td>
+                <td class="border border-slate-700 p-2">${formatDate(recordDate(record))}</td>
+                <td class="w-1/5 border border-slate-700 p-2 font-bold">ชั้น/ห้อง</td>
+                <td class="border border-slate-700 p-2">${safeText(record.class_name)}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-700 p-2 font-bold">รายวิชา</td>
+                <td class="border border-slate-700 p-2">${safeText(record.subject)}</td>
+                <td class="border border-slate-700 p-2 font-bold">หน่วย/เรื่อง</td>
+                <td class="border border-slate-700 p-2">${safeText(record.unit_name)}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-700 p-2 font-bold">สื่อ/แหล่งเรียนรู้</td>
+                <td class="border border-slate-700 p-2" colspan="3">${tagText(record.media_tags)}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-700 p-2 font-bold">ผลด้าน K</td>
+                <td class="border border-slate-700 p-2" colspan="3">${safeText(record.learning_result_k)}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-700 p-2 font-bold">ผลด้าน P</td>
+                <td class="border border-slate-700 p-2" colspan="3">${safeText(record.learning_result_p)}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-700 p-2 font-bold">ผลด้าน A</td>
+                <td class="border border-slate-700 p-2" colspan="3">${safeText(record.learning_result_a)}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-700 p-2 font-bold">ปัญหา/อุปสรรค</td>
+                <td class="border border-slate-700 p-2" colspan="3">${safeText(getProblem(record), "ไม่พบปัญหาสำคัญ")}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-700 p-2 font-bold">แนวทางแก้ไข/ข้อเสนอแนะ</td>
+                <td class="border border-slate-700 p-2" colspan="3">${safeText(getSolution(record), "ติดตามผลและปรับปรุงการจัดการเรียนรู้ในครั้งต่อไป")}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-700 p-2 font-bold">PA Tags</td>
+                <td class="border border-slate-700 p-2" colspan="3">${tagText(record.pa_tags)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
       `).join("");
     }
 
-    document.addEventListener("DOMContentLoaded", loadRecords);
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("printDate").textContent = new Date().toLocaleDateString("th-TH", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+
+      document.getElementById("applyBtn").addEventListener("click", applyFilters);
+      document.getElementById("sortSelect").addEventListener("change", applyFilters);
+      document.getElementById("searchInput").addEventListener("input", applyFilters);
+      document.getElementById("subjectFilter").addEventListener("input", applyFilters);
+      document.getElementById("classFilter").addEventListener("input", applyFilters);
+      document.getElementById("startDate").addEventListener("change", applyFilters);
+      document.getElementById("endDate").addEventListener("change", applyFilters);
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        ["searchInput", "subjectFilter", "classFilter", "startDate", "endDate"].forEach(id => {
+          document.getElementById(id).value = "";
+        });
+        document.getElementById("sortSelect").value = "date-desc";
+        applyFilters();
+      });
+
+      loadRecords();
+    });
   </script>
 </body>
 </html>
