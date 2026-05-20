@@ -63,10 +63,10 @@
 
     <div class="rounded-xl bg-white p-4 shadow">
       <h2 class="mb-3 text-lg font-black">ค้นหาและจัดเรียงข้อมูล</h2>
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-6">
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-7">
         <label class="md:col-span-2">
           <span class="block text-sm font-bold">ค้นหา</span>
-          <input id="searchInput" type="search" placeholder="ค้นหาวิชา เรื่อง ปัญหา K-P-A" class="mt-1 w-full rounded-lg border p-2">
+          <input id="searchInput" type="search" placeholder="ค้นหาวิชา เรื่อง คาบ ครูร่วม ปัญหา K-P-A" class="mt-1 w-full rounded-lg border p-2">
         </label>
 
         <label>
@@ -80,6 +80,13 @@
           <span class="block text-sm font-bold">ชั้นเรียน</span>
           <select id="classFilter" class="mt-1 w-full rounded-lg border p-2">
             <option value="">ทุกชั้นเรียน</option>
+          </select>
+        </label>
+
+        <label>
+          <span class="block text-sm font-bold">คาบเรียน</span>
+          <select id="periodFilter" class="mt-1 w-full rounded-lg border p-2">
+            <option value="">ทุกคาบ</option>
           </select>
         </label>
 
@@ -108,6 +115,7 @@
 
         <div class="flex items-end gap-2 md:col-span-3">
           <button id="applyBtn" type="button" class="rounded-lg bg-slate-900 px-5 py-2 font-bold text-white">ใช้ตัวกรอง</button>
+          <button id="aiSummaryBtn" type="button" class="rounded-lg bg-violet-700 px-5 py-2 font-bold text-white">AI สรุปภาพรวม</button>
           <button id="resetBtn" type="button" class="rounded-lg bg-slate-200 px-5 py-2 font-bold">ล้างตัวกรอง</button>
           <p id="filterStatus" class="text-sm font-bold text-slate-600"></p>
         </div>
@@ -191,8 +199,10 @@
     const SUPABASE_URL = "https://dqudvtapdypzngmwaega.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_PzeH2jrH8EQI-HmIpOhQ1g_eFySvIhH";
     const TABLE_NAME = "lesson_records";
+    const REPORT_SUMMARY_ENDPOINT = `${SUPABASE_URL}/functions/v1/summarize-report`;
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let allRecords = [];
+    let filteredRecords = [];
 
     function safeText(value, fallback = "-") {
       return value && String(value).trim() ? String(value).trim() : fallback;
@@ -227,7 +237,9 @@
       return [
         record.record_date,
         record.created_at,
+        record.period_label,
         record.teacher_name,
+        Array.isArray(record.co_teachers) ? record.co_teachers.join(" ") : "",
         record.class_name,
         record.subject,
         record.unit_name,
@@ -246,6 +258,7 @@
       const keyword = document.getElementById("searchInput").value.trim().toLowerCase();
       const subject = document.getElementById("subjectFilter").value.trim().toLowerCase();
       const className = document.getElementById("classFilter").value.trim().toLowerCase();
+      const period = document.getElementById("periodFilter").value.trim().toLowerCase();
       const startDate = document.getElementById("startDate").value;
       const endDate = document.getElementById("endDate").value;
       const sortMode = document.getElementById("sortSelect").value;
@@ -264,6 +277,10 @@
         records = records.filter(record => safeText(record.class_name, "").toLowerCase() === className);
       }
 
+      if (period) {
+        records = records.filter(record => safeText(record.period_label, "").toLowerCase() === period);
+      }
+
       if (startDate) {
         records = records.filter(record => recordDate(record).slice(0, 10) >= startDate);
       }
@@ -280,7 +297,59 @@
         return recordDate(b).localeCompare(recordDate(a));
       });
 
+      filteredRecords = records;
       renderRecords(records);
+    }
+
+    function basicSummary(records, subjects, problems, paTags) {
+      return `มีบันทึกหลังสอนทั้งหมด ${records.length} รายการ ครอบคลุม ${subjects.size} วิชา พบประเด็นปัญหาหรืออุปสรรคที่ควรติดตาม ${problems.length} รายการ และมีการเชื่อมโยง PA Tags จำนวน ${paTags.size} แท็ก ข้อมูลดังกล่าวสามารถใช้ประกอบการติดตามผลการจัดการเรียนรู้ การปรับปรุงการสอน และการจัดทำหลักฐานประกอบการประเมินผลการพัฒนางานตามข้อตกลง (PA) ได้`;
+    }
+
+    async function summarizeVisibleRecords() {
+      if (!filteredRecords.length) {
+        document.getElementById("summaryText").textContent = "ไม่พบข้อมูลสำหรับสรุปภาพรวม";
+        return;
+      }
+
+      const button = document.getElementById("aiSummaryBtn");
+      button.disabled = true;
+      button.textContent = "AI กำลังสรุป...";
+      document.getElementById("summaryText").textContent = "AI กำลังวิเคราะห์สรุปภาพรวมจากรายการที่แสดงอยู่...";
+
+      try {
+        const response = await fetch(REPORT_SUMMARY_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            records: filteredRecords.slice(0, 40)
+          })
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "AI สรุปภาพรวมไม่สำเร็จ");
+
+        document.getElementById("summaryText").textContent = result.summary || "AI ไม่ได้ส่งข้อความสรุปกลับมา";
+      } catch (error) {
+        const subjects = new Set(filteredRecords.map(record => record.subject).filter(Boolean));
+        const problems = filteredRecords.filter(record => getProblem(record).trim());
+        const paTags = new Set();
+
+        filteredRecords.forEach(record => {
+          if (Array.isArray(record.pa_tags)) {
+            record.pa_tags.forEach(tag => paTags.add(tag));
+          }
+        });
+
+        document.getElementById("summaryText").textContent =
+          `${basicSummary(filteredRecords, subjects, problems, paTags)} (AI สรุปภาพรวมไม่สำเร็จ: ${error.message})`;
+      } finally {
+        button.disabled = false;
+        button.textContent = "AI สรุปภาพรวม";
+      }
     }
 
     async function loadRecords() {
@@ -304,9 +373,12 @@
     function populateFilterOptions(records) {
       const subjectSelect = document.getElementById("subjectFilter");
       const classSelect = document.getElementById("classFilter");
+      const periodSelect = document.getElementById("periodFilter");
       const subjects = [...new Set(records.map(record => safeText(record.subject, "")).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, "th"));
       const classes = [...new Set(records.map(record => safeText(record.class_name, "")).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, "th"));
+      const periods = [...new Set(records.map(record => safeText(record.period_label, "")).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, "th"));
 
       subjectSelect.innerHTML = `<option value="">ทุกวิชา</option>` +
@@ -314,6 +386,30 @@
 
       classSelect.innerHTML = `<option value="">ทุกชั้นเรียน</option>` +
         classes.map(className => `<option value="${className}">${className}</option>`).join("");
+
+      periodSelect.innerHTML = `<option value="">ทุกคาบ</option>` +
+        periods.map(period => `<option value="${period}">${period}</option>`).join("");
+    }
+
+    function teacherText(record) {
+      const coTeachers = Array.isArray(record.co_teachers) ? record.co_teachers.filter(Boolean) : [];
+      return coTeachers.length
+        ? `${safeText(record.teacher_name)} / ครูสอนร่วม: ${coTeachers.join(", ")}`
+        : safeText(record.teacher_name);
+    }
+
+    function photoGrid(urls) {
+      if (!Array.isArray(urls) || !urls.length) return "-";
+
+      return `
+        <div class="grid grid-cols-2 gap-2 md:grid-cols-3">
+          ${urls.map((url, index) => `
+            <a href="${url}" target="_blank" rel="noopener" class="block overflow-hidden rounded border border-slate-400">
+              <img src="${url}" alt="รูปกิจกรรมหลังสอน ${index + 1}" class="h-32 w-full object-cover">
+            </a>
+          `).join("")}
+        </div>
+      `;
     }
 
     function renderRecords(records) {
@@ -333,8 +429,7 @@
       document.getElementById("totalPATags").textContent = paTags.size;
       document.getElementById("filterStatus").textContent = `แสดง ${records.length} จาก ${allRecords.length} รายการ`;
 
-      document.getElementById("summaryText").textContent =
-        `มีบันทึกหลังสอนทั้งหมด ${records.length} รายการ ครอบคลุม ${subjects.size} วิชา พบประเด็นปัญหาหรืออุปสรรคที่ควรติดตาม ${problems.length} รายการ และมีการเชื่อมโยง PA Tags จำนวน ${paTags.size} แท็ก ข้อมูลดังกล่าวสามารถใช้ประกอบการติดตามผลการจัดการเรียนรู้ การปรับปรุงการสอน และการจัดทำหลักฐานประกอบการประเมินผลการพัฒนางานตามข้อตกลง (PA) ได้`;
+      document.getElementById("summaryText").textContent = basicSummary(records, subjects, problems, paTags);
 
       document.getElementById("paTagList").textContent = paTags.size
         ? [...paTags].map(tag => `#${tag}`).join("  ")
@@ -350,7 +445,7 @@
       list.innerHTML = records.map((record, index) => `
         <article class="record-block border border-slate-800">
           <div class="border-b border-slate-800 bg-slate-100 p-2 font-bold">
-            รายการที่ ${index + 1}: ${safeText(record.subject)} | ${safeText(record.class_name)} | ${formatDate(recordDate(record))}
+            รายการที่ ${index + 1}: ${safeText(record.subject)} | ${safeText(record.class_name)} | ${safeText(record.period_label, "ไม่ระบุคาบ")} | ${formatDate(recordDate(record))}
           </div>
           <table class="w-full border-collapse">
             <tbody>
@@ -359,6 +454,12 @@
                 <td class="border border-slate-700 p-2">${formatDate(recordDate(record))}</td>
                 <td class="w-1/5 border border-slate-700 p-2 font-bold">ชั้น/ห้อง</td>
                 <td class="border border-slate-700 p-2">${safeText(record.class_name)}</td>
+              </tr>
+              <tr>
+                <td class="border border-slate-700 p-2 font-bold">คาบเรียน</td>
+                <td class="border border-slate-700 p-2">${safeText(record.period_label, "ไม่ระบุคาบ")}</td>
+                <td class="border border-slate-700 p-2 font-bold">ครูผู้สอน/ครูสอนร่วม</td>
+                <td class="border border-slate-700 p-2">${teacherText(record)}</td>
               </tr>
               <tr>
                 <td class="border border-slate-700 p-2 font-bold">รายวิชา</td>
@@ -394,6 +495,10 @@
                 <td class="border border-slate-700 p-2 font-bold">PA Tags</td>
                 <td class="border border-slate-700 p-2" colspan="3">${tagText(record.pa_tags)}</td>
               </tr>
+              <tr>
+                <td class="border border-slate-700 p-2 font-bold">รูปกิจกรรมหลังสอน</td>
+                <td class="border border-slate-700 p-2" colspan="3">${photoGrid(record.activity_photo_urls)}</td>
+              </tr>
             </tbody>
           </table>
         </article>
@@ -408,14 +513,16 @@
       });
 
       document.getElementById("applyBtn").addEventListener("click", applyFilters);
+      document.getElementById("aiSummaryBtn").addEventListener("click", summarizeVisibleRecords);
       document.getElementById("sortSelect").addEventListener("change", applyFilters);
       document.getElementById("searchInput").addEventListener("input", applyFilters);
       document.getElementById("subjectFilter").addEventListener("change", applyFilters);
       document.getElementById("classFilter").addEventListener("change", applyFilters);
+      document.getElementById("periodFilter").addEventListener("change", applyFilters);
       document.getElementById("startDate").addEventListener("change", applyFilters);
       document.getElementById("endDate").addEventListener("change", applyFilters);
       document.getElementById("resetBtn").addEventListener("click", () => {
-        ["searchInput", "subjectFilter", "classFilter", "startDate", "endDate"].forEach(id => {
+        ["searchInput", "subjectFilter", "classFilter", "periodFilter", "startDate", "endDate"].forEach(id => {
           document.getElementById(id).value = "";
         });
         document.getElementById("sortSelect").value = "date-desc";

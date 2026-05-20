@@ -2,3 +2,6 @@ project_id = "dqudvtapdypzngmwaega"
 
 [functions.analyze-record]
 verify_jwt = false
+
+[functions.summarize-report]
+verify_jwt = false
