@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.summarize-report]
 verify_jwt = false
+
+[functions.upload-lesson-photo]
+verify_jwt = false

@@ -159,8 +159,8 @@
     const SUPABASE_URL = "https://dqudvtapdypzngmwaega.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_PzeH2jrH8EQI-HmIpOhQ1g_eFySvIhH";
     const GEMINI_ENDPOINT = `${SUPABASE_URL}/functions/v1/analyze-record`;
+    const PHOTO_UPLOAD_ENDPOINT = `${SUPABASE_URL}/functions/v1/upload-lesson-photo`;
     const TABLE_NAME = "lesson_records";
-    const PHOTO_BUCKET = "lesson-photos";
     const SAVE_PIN = "4242";
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -371,19 +371,25 @@
         setStatus(`กำลังย่อและอัปโหลดรูป ${index + 1}/${files.length}...`, "info");
         const compressed = await compressPhoto(file);
         const safeDate = recordDate || new Date().toISOString().slice(0, 10);
-        const fileName = `${safeDate}/${Date.now()}-${index + 1}.jpg`;
-        const { error } = await db.storage
-          .from(PHOTO_BUCKET)
-          .upload(fileName, compressed, {
-            cacheControl: "31536000",
-            contentType: "image/jpeg",
-            upsert: false
-          });
+        const formData = new FormData();
 
-        if (error) throw new Error(`อัปโหลดรูปไม่สำเร็จ: ${error.message}`);
+        formData.append("record_date", safeDate);
+        formData.append("index", String(index + 1));
+        formData.append("file", compressed, `${safeDate}-${index + 1}.jpg`);
 
-        const { data } = db.storage.from(PHOTO_BUCKET).getPublicUrl(fileName);
-        urls.push(data.publicUrl);
+        const response = await fetch(PHOTO_UPLOAD_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          },
+          body: formData
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "อัปโหลดรูปไม่สำเร็จ");
+
+        urls.push(result.publicUrl);
       }
 
       return urls;
