@@ -160,6 +160,7 @@
     const SUPABASE_ANON_KEY = "sb_publishable_PzeH2jrH8EQI-HmIpOhQ1g_eFySvIhH";
     const GEMINI_ENDPOINT = `${SUPABASE_URL}/functions/v1/analyze-record`;
     const PHOTO_UPLOAD_ENDPOINT = `${SUPABASE_URL}/functions/v1/upload-lesson-photo`;
+    const SAVE_RECORD_ENDPOINT = `${SUPABASE_URL}/functions/v1/save-lesson-record`;
     const TABLE_NAME = "lesson_records";
     const SAVE_PIN = "4242";
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -455,8 +456,21 @@
           note: raw
         };
 
-        const { error } = await db.from(TABLE_NAME).insert([payload]);
-        if (error) throw error;
+        const response = await fetch(SAVE_RECORD_ENDPOINT, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          },
+          body: JSON.stringify({
+            pin: enteredPin.trim(),
+            record: payload
+          })
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "บันทึกไม่สำเร็จ");
 
         setStatus("บันทึกสำเร็จแล้ว ข้อมูลถูกส่งเข้า Supabase", "success");
         $("rawText").value = "";

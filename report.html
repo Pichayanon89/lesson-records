@@ -200,6 +200,7 @@
     const SUPABASE_ANON_KEY = "sb_publishable_PzeH2jrH8EQI-HmIpOhQ1g_eFySvIhH";
     const TABLE_NAME = "lesson_records";
     const REPORT_SUMMARY_ENDPOINT = `${SUPABASE_URL}/functions/v1/summarize-report`;
+    const LIST_RECORDS_ENDPOINT = `${SUPABASE_URL}/functions/v1/list-lesson-records`;
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let allRecords = [];
     let filteredRecords = [];
@@ -353,21 +354,25 @@
     }
 
     async function loadRecords() {
-      const { data, error } = await db
-        .from(TABLE_NAME)
-        .select("*")
-        .order("record_date", { ascending: false, nullsFirst: false })
-        .order("created_at", { ascending: false });
+      try {
+        const response = await fetch(LIST_RECORDS_ENDPOINT, {
+          method: "GET",
+          headers: {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+        const data = await response.json();
 
-      if (error) {
+        if (!response.ok) throw new Error(data.error || "โหลดข้อมูลไม่สำเร็จ");
+
+        allRecords = data || [];
+        populateFilterOptions(allRecords);
+        applyFilters();
+      } catch (error) {
         document.getElementById("recordsList").innerHTML =
           `<p class="border border-slate-700 p-4 text-center text-red-700">โหลดข้อมูลไม่สำเร็จ: ${error.message}</p>`;
-        return;
       }
-
-      allRecords = data || [];
-      populateFilterOptions(allRecords);
-      applyFilters();
     }
 
     function populateFilterOptions(records) {

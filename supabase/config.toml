@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.upload-lesson-photo]
 verify_jwt = false
+
+[functions.save-lesson-record]
+verify_jwt = false
+
+[functions.list-lesson-records]
+verify_jwt = false
