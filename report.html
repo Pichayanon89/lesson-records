@@ -123,6 +123,90 @@
     </div>
   </section>
 
+  <section id="editModal" class="no-print fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/70 p-4">
+    <div class="mx-auto max-w-3xl rounded-xl bg-white p-5 shadow-xl">
+      <div class="mb-4 flex items-center justify-between gap-3">
+        <h2 class="text-xl font-black">แก้ไขบันทึกหลังสอน</h2>
+        <button id="closeEditBtn" type="button" class="rounded-lg bg-slate-200 px-4 py-2 font-bold">ปิด</button>
+      </div>
+
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
+        <label>
+          <span class="block text-sm font-bold">วันที่</span>
+          <input id="editRecordDate" type="date" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+        <label>
+          <span class="block text-sm font-bold">คาบเรียน</span>
+          <input id="editPeriodLabel" type="text" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+        <label>
+          <span class="block text-sm font-bold">วิชา</span>
+          <input id="editSubject" type="text" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+        <label>
+          <span class="block text-sm font-bold">ชั้นเรียน</span>
+          <input id="editClassName" type="text" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+      </div>
+
+      <label class="mt-3 block">
+        <span class="block text-sm font-bold">เรื่องที่สอน</span>
+        <input id="editUnitName" type="text" class="mt-1 w-full rounded-lg border p-2">
+      </label>
+      <label class="mt-3 block">
+        <span class="block text-sm font-bold">ครูสอนร่วม</span>
+        <input id="editCoTeachers" type="text" class="mt-1 w-full rounded-lg border p-2">
+      </label>
+
+      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
+        <label>
+          <span class="block text-sm font-bold">K</span>
+          <textarea id="editK" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
+        </label>
+        <label>
+          <span class="block text-sm font-bold">P</span>
+          <textarea id="editP" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
+        </label>
+        <label>
+          <span class="block text-sm font-bold">A</span>
+          <textarea id="editA" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
+        </label>
+      </div>
+
+      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <label>
+          <span class="block text-sm font-bold">ปัญหา</span>
+          <textarea id="editProblem" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
+        </label>
+        <label>
+          <span class="block text-sm font-bold">แนวทางแก้ไข</span>
+          <textarea id="editSolution" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
+        </label>
+      </div>
+
+      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <label>
+          <span class="block text-sm font-bold">สื่อที่ใช้</span>
+          <input id="editMediaTags" type="text" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+        <label>
+          <span class="block text-sm font-bold">PA Tags</span>
+          <input id="editPaTags" type="text" class="mt-1 w-full rounded-lg border p-2">
+        </label>
+      </div>
+
+      <label class="mt-3 block">
+        <span class="block text-sm font-bold">บันทึกสั้น ๆ</span>
+        <textarea id="editNote" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
+      </label>
+
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <button id="saveEditBtn" type="button" class="rounded-lg bg-blue-700 px-5 py-2 font-bold text-white">บันทึกการแก้ไข</button>
+        <p id="editStatus" class="text-sm font-bold text-slate-600"></p>
+      </div>
+    </div>
+  </section>
+
   <main class="a4 official-report mx-auto my-5 max-w-6xl bg-white p-8 shadow-xl">
     <header class="border-b-2 border-slate-950 pb-4 text-center">
       <img src="assets/logo.jpg" alt="โลโก้โรงเรียนอนุบาลหนองหานวิทยายน" class="mx-auto h-24 w-24 rounded-full border bg-white object-cover">
@@ -201,9 +285,11 @@
     const TABLE_NAME = "lesson_records";
     const REPORT_SUMMARY_ENDPOINT = `${SUPABASE_URL}/functions/v1/summarize-report`;
     const LIST_RECORDS_ENDPOINT = `${SUPABASE_URL}/functions/v1/list-lesson-records`;
+    const MANAGE_RECORD_ENDPOINT = `${SUPABASE_URL}/functions/v1/manage-lesson-record`;
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     let allRecords = [];
     let filteredRecords = [];
+    let editingRecordId = "";
 
     function safeText(value, fallback = "-") {
       return value && String(value).trim() ? String(value).trim() : fallback;
@@ -232,6 +318,14 @@
 
     function tagText(tags) {
       return Array.isArray(tags) && tags.length ? tags.map(tag => `#${tag}`).join(" ") : "-";
+    }
+
+    function tagInputText(tags) {
+      return Array.isArray(tags) ? tags.join(", ") : "";
+    }
+
+    function splitInput(value) {
+      return (value || "").split(",").map(item => item.trim()).filter(Boolean);
     }
 
     function searchableText(record) {
@@ -450,7 +544,13 @@
       list.innerHTML = records.map((record, index) => `
         <article class="record-block border border-slate-800">
           <div class="border-b border-slate-800 bg-slate-100 p-2 font-bold">
-            รายการที่ ${index + 1}: ${safeText(record.subject)} | ${safeText(record.class_name)} | ${safeText(record.period_label, "ไม่ระบุคาบ")} | ${formatDate(recordDate(record))}
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span>รายการที่ ${index + 1}: ${safeText(record.subject)} | ${safeText(record.class_name)} | ${safeText(record.period_label, "ไม่ระบุคาบ")} | ${formatDate(recordDate(record))}</span>
+              <span class="no-print flex gap-2">
+                <button type="button" data-action="edit" data-id="${record.id}" class="rounded bg-blue-700 px-3 py-1 text-sm font-bold text-white">แก้ไข</button>
+                <button type="button" data-action="delete" data-id="${record.id}" class="rounded bg-red-700 px-3 py-1 text-sm font-bold text-white">ลบ</button>
+              </span>
+            </div>
           </div>
           <table class="w-full border-collapse">
             <tbody>
@@ -510,6 +610,113 @@
       `).join("");
     }
 
+    function setEditStatus(message, type = "info") {
+      const colors = {
+        info: "text-slate-600",
+        success: "text-emerald-700",
+        error: "text-red-700"
+      };
+      document.getElementById("editStatus").textContent = message;
+      document.getElementById("editStatus").className = `text-sm font-bold ${colors[type] || colors.info}`;
+    }
+
+    function openEditModal(recordId) {
+      const record = allRecords.find(item => item.id === recordId);
+      if (!record) return;
+
+      editingRecordId = recordId;
+      document.getElementById("editRecordDate").value = safeText(record.record_date, "");
+      document.getElementById("editPeriodLabel").value = safeText(record.period_label, "");
+      document.getElementById("editSubject").value = safeText(record.subject, "");
+      document.getElementById("editClassName").value = safeText(record.class_name, "");
+      document.getElementById("editUnitName").value = safeText(record.unit_name, "");
+      document.getElementById("editCoTeachers").value = tagInputText(record.co_teachers);
+      document.getElementById("editK").value = safeText(record.learning_result_k, "");
+      document.getElementById("editP").value = safeText(record.learning_result_p, "");
+      document.getElementById("editA").value = safeText(record.learning_result_a, "");
+      document.getElementById("editProblem").value = safeText(getProblem(record), "");
+      document.getElementById("editSolution").value = safeText(getSolution(record), "");
+      document.getElementById("editMediaTags").value = tagInputText(record.media_tags);
+      document.getElementById("editPaTags").value = tagInputText(record.pa_tags);
+      document.getElementById("editNote").value = safeText(record.note, "");
+      setEditStatus("");
+      document.getElementById("editModal").classList.remove("hidden");
+    }
+
+    function closeEditModal() {
+      editingRecordId = "";
+      document.getElementById("editModal").classList.add("hidden");
+    }
+
+    async function manageRecord(action, id, record = null) {
+      const pin = window.prompt("กรุณาใส่ PIN เพื่อยืนยัน");
+
+      if (pin === null) return null;
+
+      const response = await fetch(MANAGE_RECORD_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+        },
+        body: JSON.stringify({ action, id, pin, record })
+      });
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.error || "ดำเนินการไม่สำเร็จ");
+      return result;
+    }
+
+    async function saveEdit() {
+      if (!editingRecordId) return;
+
+      const existing = allRecords.find(item => item.id === editingRecordId);
+      const record = {
+        record_date: document.getElementById("editRecordDate").value,
+        period_label: document.getElementById("editPeriodLabel").value,
+        teacher_name: existing?.teacher_name || "นายพิชญานนท์ วัจนสุนทร",
+        co_teachers: splitInput(document.getElementById("editCoTeachers").value),
+        class_name: document.getElementById("editClassName").value,
+        subject: document.getElementById("editSubject").value,
+        unit_name: document.getElementById("editUnitName").value,
+        learning_result_k: document.getElementById("editK").value,
+        learning_result_p: document.getElementById("editP").value,
+        learning_result_a: document.getElementById("editA").value,
+        problem: document.getElementById("editProblem").value,
+        solution: document.getElementById("editSolution").value,
+        media_tags: splitInput(document.getElementById("editMediaTags").value),
+        pa_tags: splitInput(document.getElementById("editPaTags").value),
+        activity_photo_urls: existing?.activity_photo_urls || [],
+        note: document.getElementById("editNote").value
+      };
+
+      setEditStatus("กำลังบันทึกการแก้ไข...", "info");
+
+      try {
+        await manageRecord("update", editingRecordId, record);
+        setEditStatus("แก้ไขสำเร็จ", "success");
+        await loadRecords();
+        closeEditModal();
+      } catch (error) {
+        setEditStatus(`แก้ไขไม่สำเร็จ: ${error.message}`, "error");
+      }
+    }
+
+    async function deleteRecord(recordId) {
+      const record = allRecords.find(item => item.id === recordId);
+      const label = `${safeText(record?.subject)} | ${safeText(record?.class_name)} | ${formatDate(recordDate(record || {}))}`;
+
+      if (!window.confirm(`ยืนยันลบบันทึกนี้หรือไม่?\n${label}`)) return;
+
+      try {
+        await manageRecord("delete", recordId);
+        await loadRecords();
+      } catch (error) {
+        window.alert(`ลบไม่สำเร็จ: ${error.message}`);
+      }
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("printDate").textContent = new Date().toLocaleDateString("th-TH", {
         year: "numeric",
@@ -533,6 +740,15 @@
         document.getElementById("sortSelect").value = "date-desc";
         applyFilters();
       });
+      document.getElementById("recordsList").addEventListener("click", event => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+
+        if (button.dataset.action === "edit") openEditModal(button.dataset.id);
+        if (button.dataset.action === "delete") deleteRecord(button.dataset.id);
+      });
+      document.getElementById("closeEditBtn").addEventListener("click", closeEditModal);
+      document.getElementById("saveEditBtn").addEventListener("click", saveEdit);
 
       loadRecords();
     });

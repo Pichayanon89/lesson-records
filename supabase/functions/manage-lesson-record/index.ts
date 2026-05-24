@@ -7,7 +7,9 @@ const jsonHeaders = {
   "Content-Type": "application/json; charset=utf-8",
 };
 
-type SaveRequest = {
+type ManageRequest = {
+  action?: "update" | "delete";
+  id?: string;
   pin?: string;
   record?: Record<string, unknown>;
 };
@@ -24,31 +26,29 @@ function stringValue(value: unknown, fallback = "") {
 }
 
 function stringArray(value: unknown) {
-  return Array.isArray(value)
-    ? value.map((item) => String(item).trim()).filter(Boolean)
-    : [];
-}
-
-function normalizeRecord(input: Record<string, unknown>) {
-  const problem = stringValue(input.problem || input.problems);
-  const solution = stringValue(input.solution || input.improvements);
-  const note = stringValue(input.note);
-
-  if (!note) {
-    throw new Error("ยังไม่มีข้อความบันทึกหลังสอน");
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
   }
 
+  if (typeof value === "string") {
+    return value.split(",").map((item) => item.trim()).filter(Boolean);
+  }
+
+  return [];
+}
+
+function normalizePatch(input: Record<string, unknown>) {
+  const problem = stringValue(input.problem || input.problems);
+  const solution = stringValue(input.solution || input.improvements);
+
   return {
-    record_date: stringValue(input.record_date, new Date().toISOString().slice(0, 10)),
+    record_date: stringValue(input.record_date),
     period_label: stringValue(input.period_label),
     teacher_name: stringValue(input.teacher_name, "นายพิชญานนท์ วัจนสุนทร"),
     co_teachers: stringArray(input.co_teachers),
     class_name: stringValue(input.class_name, "ไม่ระบุชั้นเรียน"),
     subject: stringValue(input.subject, "ไม่ระบุวิชา"),
     unit_name: stringValue(input.unit_name, "ไม่ระบุเรื่อง"),
-    k_score: null,
-    p_score: null,
-    a_score: null,
     learning_result_k: stringValue(input.learning_result_k),
     learning_result_p: stringValue(input.learning_result_p),
     learning_result_a: stringValue(input.learning_result_a),
@@ -60,7 +60,7 @@ function normalizeRecord(input: Record<string, unknown>) {
     pa_tags: stringArray(input.pa_tags),
     activity_photo_urls: stringArray(input.activity_photo_urls),
     activity_photo_count: stringArray(input.activity_photo_urls).length,
-    note,
+    note: stringValue(input.note),
   };
 }
 
@@ -82,10 +82,10 @@ Deno.serve(async (req) => {
   const savePin = Deno.env.get("SAVE_PIN");
 
   if (!supabaseUrl || !serviceRoleKey || !savePin) {
-    return jsonResponse({ error: "Save service is not configured" }, 500);
+    return jsonResponse({ error: "Manage service is not configured" }, 500);
   }
 
-  let payload: SaveRequest;
+  let payload: ManageRequest;
 
   try {
     payload = await req.json();
@@ -97,38 +97,52 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "PIN ไม่ถูกต้อง" }, 403);
   }
 
-  if (!payload.record || typeof payload.record !== "object") {
-    return jsonResponse({ error: "record is required" }, 400);
+  if (!payload.id) {
+    return jsonResponse({ error: "id is required" }, 400);
   }
 
-  let record;
+  const encodedId = encodeURIComponent(payload.id);
+  const baseUrl = `${supabaseUrl}/rest/v1/${TABLE_NAME}?id=eq.${encodedId}`;
+  const headers = {
+    "Authorization": `Bearer ${serviceRoleKey}`,
+    "apikey": serviceRoleKey,
+    "Content-Type": "application/json",
+    "Prefer": "return=representation",
+  };
 
-  try {
-    record = normalizeRecord(payload.record);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Invalid record";
-    return jsonResponse({ error: message }, 400);
+  if (payload.action === "delete") {
+    const response = await fetch(baseUrl, {
+      method: "DELETE",
+      headers,
+    });
+    const text = await response.text();
+
+    if (!response.ok) {
+      return jsonResponse({ error: text || "Delete failed" }, response.status);
+    }
+
+    return new Response(text || "[]", { status: 200, headers: jsonHeaders });
   }
 
-  const response = await fetch(`${supabaseUrl}/rest/v1/${TABLE_NAME}`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${serviceRoleKey}`,
-      "apikey": serviceRoleKey,
-      "Content-Type": "application/json",
-      "Prefer": "return=representation",
-    },
-    body: JSON.stringify([record]),
-  });
+  if (payload.action === "update") {
+    if (!payload.record || typeof payload.record !== "object") {
+      return jsonResponse({ error: "record is required" }, 400);
+    }
 
-  const text = await response.text();
+    const patch = normalizePatch(payload.record);
+    const response = await fetch(baseUrl, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(patch),
+    });
+    const text = await response.text();
 
-  if (!response.ok) {
-    return jsonResponse({ error: text || "Save failed" }, response.status);
+    if (!response.ok) {
+      return jsonResponse({ error: text || "Update failed" }, response.status);
+    }
+
+    return new Response(text, { status: 200, headers: jsonHeaders });
   }
 
-  return new Response(text, {
-    status: 200,
-    headers: jsonHeaders,
-  });
+  return jsonResponse({ error: "Unsupported action" }, 400);
 });

@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.list-lesson-records]
 verify_jwt = false
+
+[functions.manage-lesson-record]
+verify_jwt = false

@@ -162,7 +162,6 @@
     const PHOTO_UPLOAD_ENDPOINT = `${SUPABASE_URL}/functions/v1/upload-lesson-photo`;
     const SAVE_RECORD_ENDPOINT = `${SUPABASE_URL}/functions/v1/save-lesson-record`;
     const TABLE_NAME = "lesson_records";
-    const SAVE_PIN = "4242";
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const $ = id => document.getElementById(id);
@@ -409,20 +408,37 @@
         return;
       }
 
+      if (!$("learningK").value && !$("learningP").value && !$("learningA").value) {
+        analyzeBasic(false);
+      }
+
+      const reviewText = [
+        "ตรวจทานก่อนบันทึก",
+        `วันที่: ${$("recordDate").value || "-"}`,
+        `คาบเรียน: ${$("periodLabel").value || "-"}`,
+        `วิชา: ${$("subject").value || "-"}`,
+        `ชั้นเรียน: ${$("className").value || "-"}`,
+        `เรื่อง: ${$("unitName").value || "-"}`,
+        `ครูสอนร่วม: ${$("coTeachers").value || "-"}`,
+        `รูปกิจกรรม: ${$("activityPhotos").files.length} รูป`,
+        "",
+        `K: ${$("learningK").value || "-"}`,
+        `P: ${$("learningP").value || "-"}`,
+        `A: ${$("learningA").value || "-"}`,
+        "",
+        "ยืนยันบันทึกข้อมูลนี้หรือไม่?"
+      ].join("\n");
+
+      if (!window.confirm(reviewText)) {
+        setStatus("ยกเลิกการบันทึกข้อมูล", "info");
+        return;
+      }
+
       const enteredPin = window.prompt("กรุณาใส่ PIN ก่อนบันทึกข้อมูล");
 
       if (enteredPin === null) {
         setStatus("ยกเลิกการบันทึกข้อมูล", "info");
         return;
-      }
-
-      if (enteredPin.trim() !== SAVE_PIN) {
-        setStatus("PIN ไม่ถูกต้อง จึงไม่บันทึกข้อมูล", "error");
-        return;
-      }
-
-      if (!$("learningK").value && !$("learningP").value && !$("learningA").value) {
-        analyzeBasic(false);
       }
 
       $("saveBtn").disabled = true;
