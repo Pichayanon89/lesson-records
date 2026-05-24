@@ -6,193 +6,73 @@
   <title>รายงานบันทึกหลังสอน | Quick Record</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      color-scheme: dark;
-      font-family: "Sarabun", "TH Sarabun New", "TH SarabunPSK", system-ui, sans-serif;
-      color: #f5f3ff;
-      background: #081827;
-    }
-
-    body {
-      font-family: "TH Sarabun New", "TH SarabunPSK", "Sarabun", sans-serif;
-      min-width: 320px;
-      background:
-        radial-gradient(circle at 12% 4%, rgba(112, 45, 177, 0.5), transparent 34%),
-        radial-gradient(circle at 82% 12%, rgba(14, 165, 233, 0.28), transparent 32%),
-        linear-gradient(135deg, #210935, #161a35 42%, #073a50) !important;
-      color: #f5f3ff !important;
-    }
-
-    .official-report {
-      background: #fff !important;
-      color: #111827 !important;
-      font-family: "TH Sarabun New", "TH SarabunPSK", "Sarabun", sans-serif;
-      font-size: 16pt;
-      line-height: 1.18;
-    }
-
-    .official-report * {
-      color: #111827;
-    }
-
-    .official-report table {
-      font-size: 15pt;
-    }
-
-    .no-print > div,
-    #editModal > div {
-      background: linear-gradient(135deg, rgba(62, 43, 91, 0.72), rgba(20, 54, 75, 0.68)) !important;
-      border: 1px solid rgba(226, 232, 240, 0.16) !important;
-      box-shadow: 0 18px 55px rgba(0, 0, 0, 0.24), inset 0 1px rgba(255, 255, 255, 0.07) !important;
-      backdrop-filter: blur(18px);
-      color: #f5f3ff !important;
-    }
-
-    .no-print a,
-    .no-print button,
-    #editModal button {
-      border-radius: 10px !important;
-    }
-
-    .no-print a,
-    .no-print .bg-white,
-    .no-print .bg-slate-200,
-    #editModal .bg-slate-200 {
-      background: rgba(255, 255, 255, 0.12) !important;
-      border: 1px solid rgba(226, 232, 240, 0.18) !important;
-      color: #f5f3ff !important;
-    }
-
-    .no-print .bg-blue-700,
-    .no-print .bg-violet-700,
-    #editModal .bg-blue-700 {
-      background: linear-gradient(135deg, #2563eb, #06b6d4) !important;
-      color: #f8fbff !important;
-      box-shadow: 0 10px 28px rgba(37, 99, 235, 0.22) !important;
-    }
-
-    .no-print .bg-slate-900 {
-      background: linear-gradient(135deg, #12c184, #25d6bd) !important;
-      color: #f8fffb !important;
-      box-shadow: 0 10px 28px rgba(18, 193, 132, 0.25) !important;
-    }
-
-    input,
-    select,
-    textarea {
-      background: rgba(15, 23, 42, 0.52) !important;
-      border: 1px solid rgba(226, 232, 240, 0.18) !important;
-      color: #f8fafc !important;
-      border-radius: 10px !important;
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: rgba(226, 232, 240, 0.62) !important;
-    }
-
-    .no-print h2,
-    #editModal h2,
-    .no-print .font-black {
-      color: #f8e7ff !important;
-    }
-
-    .no-print .text-slate-600,
-    .no-print .text-sm,
-    #editModal .text-sm {
-      color: rgba(226, 232, 240, 0.78) !important;
-    }
-
-    #editModal {
-      backdrop-filter: blur(8px);
-    }
-
-    .record-block {
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-
-    @media print {
-      .no-print {
-        display: none !important;
-      }
-
-      body {
-        background: white !important;
-        color: #111827 !important;
-      }
-
-      .a4 {
-        box-shadow: none !important;
-        margin: 0 !important;
-        max-width: none !important;
-        padding: 0 !important;
-      }
-
-      .official-report {
-        font-size: 16pt;
-      }
-    }
-
-    @page {
-      size: A4;
-      margin: 14mm;
-    }
-  </style>
+  <link rel="stylesheet" href="css/app.css">
 </head>
 
-<body class="bg-slate-100 text-slate-950">
-  <section class="no-print mx-auto mt-5 max-w-6xl px-4">
-    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-      <a href="index.html" class="rounded-lg bg-white px-5 py-3 font-bold shadow">กลับไป Quick Record</a>
-      <button onclick="window.print()" class="rounded-lg bg-blue-700 px-5 py-3 font-bold text-white shadow">พิมพ์ / Export PDF</button>
-    </div>
+<body>
+  <section class="toolbar-layout no-print">
+    <header class="app-hero">
+      <div class="brand-lockup">
+        <img src="assets/logo.jpg" alt="โลโก้โรงเรียนอนุบาลหนองหานวิทยายน">
+        <div>
+          <p class="eyebrow">Quick Record Reports</p>
+          <h1 class="app-title">รายงานบันทึกหลังสอน</h1>
+          <p class="app-subtitle">ค้นหา จัดเรียง วิเคราะห์ภาพรวม และเตรียมพิมพ์เป็นเอกสารราชการ</p>
+        </div>
+      </div>
+      <button onclick="window.print()" class="btn primary">พิมพ์ / Export PDF</button>
+    </header>
 
-    <div class="rounded-xl bg-white p-4 shadow">
-      <h2 class="mb-3 text-lg font-black">ค้นหาและจัดเรียงข้อมูล</h2>
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-7">
-        <label class="md:col-span-2">
-          <span class="block text-sm font-bold">ค้นหา</span>
-          <input id="searchInput" type="search" placeholder="ค้นหาวิชา เรื่อง คาบ ครูร่วม ปัญหา K-P-A" class="mt-1 w-full rounded-lg border p-2">
+    <nav class="top-nav">
+      <a href="index.html" class="nav-link">Quick Record</a>
+      <a href="report.html" class="nav-link active">Reports</a>
+      <a href="https://pichayanon89.github.io/e-portfolio/" target="_blank" rel="noopener" class="nav-link">E-Portfolio</a>
+    </nav>
+
+    <div class="toolbar-card">
+      <h2>ค้นหาและจัดเรียงข้อมูล</h2>
+      <div class="toolbar-grid">
+        <label class="field">
+          ค้นหา
+          <input id="searchInput" type="search" placeholder="ค้นหาวิชา เรื่อง คาบ ครูร่วม ปัญหา K-P-A">
         </label>
 
-        <label>
-          <span class="block text-sm font-bold">วิชา</span>
-          <select id="subjectFilter" class="mt-1 w-full rounded-lg border p-2">
+        <label class="field">
+          วิชา
+          <select id="subjectFilter">
             <option value="">ทุกวิชา</option>
           </select>
         </label>
 
-        <label>
-          <span class="block text-sm font-bold">ชั้นเรียน</span>
-          <select id="classFilter" class="mt-1 w-full rounded-lg border p-2">
+        <label class="field">
+          ชั้นเรียน
+          <select id="classFilter">
             <option value="">ทุกชั้นเรียน</option>
           </select>
         </label>
 
-        <label>
-          <span class="block text-sm font-bold">คาบเรียน</span>
-          <select id="periodFilter" class="mt-1 w-full rounded-lg border p-2">
+        <label class="field">
+          คาบเรียน
+          <select id="periodFilter">
             <option value="">ทุกคาบ</option>
           </select>
         </label>
 
-        <label>
-          <span class="block text-sm font-bold">ตั้งแต่วันที่</span>
-          <input id="startDate" type="date" class="mt-1 w-full rounded-lg border p-2">
+        <label class="field">
+          ตั้งแต่วันที่
+          <input id="startDate" type="date">
         </label>
 
-        <label>
-          <span class="block text-sm font-bold">ถึงวันที่</span>
-          <input id="endDate" type="date" class="mt-1 w-full rounded-lg border p-2">
+        <label class="field">
+          ถึงวันที่
+          <input id="endDate" type="date">
         </label>
       </div>
 
-      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-4">
-        <label>
-          <span class="block text-sm font-bold">จัดเรียง</span>
-          <select id="sortSelect" class="mt-1 w-full rounded-lg border p-2">
+      <div class="toolbar-actions">
+        <label class="field">
+          จัดเรียง
+          <select id="sortSelect">
             <option value="date-desc">วันที่ล่าสุดก่อน</option>
             <option value="date-asc">วันที่เก่าก่อน</option>
             <option value="subject-asc">วิชา ก-ฮ</option>
@@ -201,101 +81,102 @@
           </select>
         </label>
 
-        <div class="flex items-end gap-2 md:col-span-3">
-          <button id="applyBtn" type="button" class="rounded-lg bg-slate-900 px-5 py-2 font-bold text-white">ใช้ตัวกรอง</button>
-          <button id="aiSummaryBtn" type="button" class="rounded-lg bg-violet-700 px-5 py-2 font-bold text-white">AI สรุปภาพรวม</button>
-          <button id="resetBtn" type="button" class="rounded-lg bg-slate-200 px-5 py-2 font-bold">ล้างตัวกรอง</button>
-          <p id="filterStatus" class="text-sm font-bold text-slate-600"></p>
+        <button id="applyBtn" type="button" class="btn primary">ใช้ตัวกรอง</button>
+        <button id="aiSummaryBtn" type="button" class="btn secondary">AI สรุปภาพรวม</button>
+        <button id="resetBtn" type="button" class="btn ghost">ล้างตัวกรอง</button>
+        <p id="filterStatus" class="status-line"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="editModal" class="edit-modal no-print hidden">
+    <div class="edit-card">
+      <div class="panel-head">
+        <div>
+          <h2>แก้ไขบันทึกหลังสอน</h2>
+          <p>ตรวจและปรับข้อมูลเดิม แล้วใส่ PIN เพื่อยืนยัน</p>
         </div>
+        <button id="closeEditBtn" type="button" class="btn ghost">ปิด</button>
+      </div>
+
+      <div class="form-grid">
+        <label class="field">
+          วันที่
+          <input id="editRecordDate" type="date">
+        </label>
+        <label class="field">
+          คาบเรียน
+          <input id="editPeriodLabel" type="text">
+        </label>
+        <label class="field">
+          วิชา
+          <input id="editSubject" type="text">
+        </label>
+        <label class="field">
+          ชั้นเรียน
+          <input id="editClassName" type="text">
+        </label>
+      </div>
+
+      <label class="field wide">
+        เรื่องที่สอน
+        <input id="editUnitName" type="text">
+      </label>
+      <label class="field wide">
+        ครูสอนร่วม
+        <input id="editCoTeachers" type="text">
+      </label>
+
+      <div class="three-grid field wide">
+        <label class="field">
+          K
+          <textarea id="editK" rows="4"></textarea>
+        </label>
+        <label class="field">
+          P
+          <textarea id="editP" rows="4"></textarea>
+        </label>
+        <label class="field">
+          A
+          <textarea id="editA" rows="4"></textarea>
+        </label>
+      </div>
+
+      <div class="two-grid field wide">
+        <label class="field">
+          ปัญหา
+          <textarea id="editProblem" rows="4"></textarea>
+        </label>
+        <label class="field">
+          แนวทางแก้ไข
+          <textarea id="editSolution" rows="4"></textarea>
+        </label>
+      </div>
+
+      <div class="two-grid field wide">
+        <label class="field">
+          สื่อที่ใช้
+          <input id="editMediaTags" type="text">
+        </label>
+        <label class="field">
+          PA Tags
+          <input id="editPaTags" type="text">
+        </label>
+      </div>
+
+      <label class="field wide">
+        บันทึกสั้น ๆ
+        <textarea id="editNote" rows="4"></textarea>
+      </label>
+
+      <div class="action-row">
+        <button id="saveEditBtn" type="button" class="btn primary">บันทึกการแก้ไข</button>
+        <p id="editStatus" class="status-line"></p>
       </div>
     </div>
   </section>
 
-  <section id="editModal" class="no-print fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/70 p-4">
-    <div class="mx-auto max-w-3xl rounded-xl bg-white p-5 shadow-xl">
-      <div class="mb-4 flex items-center justify-between gap-3">
-        <h2 class="text-xl font-black">แก้ไขบันทึกหลังสอน</h2>
-        <button id="closeEditBtn" type="button" class="rounded-lg bg-slate-200 px-4 py-2 font-bold">ปิด</button>
-      </div>
-
-      <div class="grid grid-cols-1 gap-3 md:grid-cols-4">
-        <label>
-          <span class="block text-sm font-bold">วันที่</span>
-          <input id="editRecordDate" type="date" class="mt-1 w-full rounded-lg border p-2">
-        </label>
-        <label>
-          <span class="block text-sm font-bold">คาบเรียน</span>
-          <input id="editPeriodLabel" type="text" class="mt-1 w-full rounded-lg border p-2">
-        </label>
-        <label>
-          <span class="block text-sm font-bold">วิชา</span>
-          <input id="editSubject" type="text" class="mt-1 w-full rounded-lg border p-2">
-        </label>
-        <label>
-          <span class="block text-sm font-bold">ชั้นเรียน</span>
-          <input id="editClassName" type="text" class="mt-1 w-full rounded-lg border p-2">
-        </label>
-      </div>
-
-      <label class="mt-3 block">
-        <span class="block text-sm font-bold">เรื่องที่สอน</span>
-        <input id="editUnitName" type="text" class="mt-1 w-full rounded-lg border p-2">
-      </label>
-      <label class="mt-3 block">
-        <span class="block text-sm font-bold">ครูสอนร่วม</span>
-        <input id="editCoTeachers" type="text" class="mt-1 w-full rounded-lg border p-2">
-      </label>
-
-      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-3">
-        <label>
-          <span class="block text-sm font-bold">K</span>
-          <textarea id="editK" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
-        </label>
-        <label>
-          <span class="block text-sm font-bold">P</span>
-          <textarea id="editP" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
-        </label>
-        <label>
-          <span class="block text-sm font-bold">A</span>
-          <textarea id="editA" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
-        </label>
-      </div>
-
-      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-        <label>
-          <span class="block text-sm font-bold">ปัญหา</span>
-          <textarea id="editProblem" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
-        </label>
-        <label>
-          <span class="block text-sm font-bold">แนวทางแก้ไข</span>
-          <textarea id="editSolution" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
-        </label>
-      </div>
-
-      <div class="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2">
-        <label>
-          <span class="block text-sm font-bold">สื่อที่ใช้</span>
-          <input id="editMediaTags" type="text" class="mt-1 w-full rounded-lg border p-2">
-        </label>
-        <label>
-          <span class="block text-sm font-bold">PA Tags</span>
-          <input id="editPaTags" type="text" class="mt-1 w-full rounded-lg border p-2">
-        </label>
-      </div>
-
-      <label class="mt-3 block">
-        <span class="block text-sm font-bold">บันทึกสั้น ๆ</span>
-        <textarea id="editNote" rows="4" class="mt-1 w-full rounded-lg border p-2"></textarea>
-      </label>
-
-      <div class="mt-4 flex flex-wrap items-center gap-2">
-        <button id="saveEditBtn" type="button" class="rounded-lg bg-blue-700 px-5 py-2 font-bold text-white">บันทึกการแก้ไข</button>
-        <p id="editStatus" class="text-sm font-bold text-slate-600"></p>
-      </div>
-    </div>
-  </section>
-
-  <main class="a4 official-report mx-auto my-5 max-w-6xl bg-white p-8 shadow-xl">
+  <main class="official-report">
     <header class="border-b-2 border-slate-950 pb-4 text-center">
       <img src="assets/logo.jpg" alt="โลโก้โรงเรียนอนุบาลหนองหานวิทยายน" class="mx-auto h-24 w-24 rounded-full border bg-white object-cover">
       <h1 class="mt-3 text-[22pt] font-bold">รายงานบันทึกหลังสอน</h1>
@@ -634,9 +515,9 @@
           <div class="border-b border-slate-800 bg-slate-100 p-2 font-bold">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span>รายการที่ ${index + 1}: ${safeText(record.subject)} | ${safeText(record.class_name)} | ${safeText(record.period_label, "ไม่ระบุคาบ")} | ${formatDate(recordDate(record))}</span>
-              <span class="no-print flex gap-2">
-                <button type="button" data-action="edit" data-id="${record.id}" class="rounded bg-blue-700 px-3 py-1 text-sm font-bold text-white">แก้ไข</button>
-                <button type="button" data-action="delete" data-id="${record.id}" class="rounded bg-red-700 px-3 py-1 text-sm font-bold text-white">ลบ</button>
+              <span class="record-actions no-print">
+                <button type="button" data-action="edit" data-id="${record.id}" class="btn secondary">แก้ไข</button>
+                <button type="button" data-action="delete" data-id="${record.id}" class="btn danger">ลบ</button>
               </span>
             </div>
           </div>
